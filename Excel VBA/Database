@@ -1,0 +1,146 @@
+Sub database()
+
+Num = Sheets("Lead").Range("C3").Value
+Num_2 = Sheets("DB_pre").Range("A1").Value
+Num_3 = Sheets("DB_pre").Range("A2").Value
+'MsgBox Num
+'MsgBox Num_2
+'MsgBox Num_3
+
+'declare a variant array
+Dim strNames() As String
+ReDim strNames(1 To Num)
+
+'Read in the list of bank
+Dim Copyrange As String
+
+For I = 1 To Num
+    b = 4 + I - 1
+    Let Copyrange = "A" & b
+    strNames(I) = Sheets("Heat map ori").Range(Copyrange).Value
+    'MsgBox strNames(I)
+    Next I
+
+'declare a variant array
+Dim dbNames() As String
+ReDim dbNames(1 To Num_2)
+
+'Read in the list of bank
+Dim Copyrange_2 As String
+
+For I = 1 To Num_2
+    b = 6 + I - 1
+    Let Copyrange_2 = "C" & b
+    dbNames(I) = Sheets("DB_pre").Range(Copyrange_2).Value
+    'MsgBox dbNames(I)
+    Next I
+    
+Dim mainArray
+
+mainArray = uniqueArr(strNames, dbNames)
+
+sheetname = "DB_Cur"
+Sheets.Add.Name = sheetname
+
+Sheets("DB_pre").Rows(5).Copy Sheets("DB_Cur").Rows(5)
+
+j = 6
+'loop through the entire array                                                                       '
+   For Each Item In mainArray
+'fetching data
+       Sheets("DB_Cur").Cells(j, 3).Value = Item 'Bank name
+       
+       'On Error Resume Next
+       keywd_1 = ThisWorkbook.Sheets("DB_Cur").Cells(j, 3).Address
+       keywd = "DB_Cur!" & keywd_1
+       'MsgBox keywd
+       'Sheets("AUX").Range("A5") = Application.Match(Item, Sheets("DB_pre").Range("C:C"), 0)
+       ThisWorkbook.Sheets("AUX").Cells(5, 1) = "=iferror(MATCH(" & keywd & "," & "DB_pre!C:C,0),999)"
+              
+       r_loc = Sheets("AUX").Range("A5")
+       c_loc = 4
+       c_loc2 = 4 + Num_3
+
+        cell5 = Cells(r_loc, c_loc).Address 'source
+        cell6 = Cells(r_loc, c_loc2).Address '
+
+        cell7 = Cells(j, c_loc).Address
+        cell8 = Cells(j, c_loc2).Address
+
+        If ThisWorkbook.Sheets("AUX").Cells(5, 1) <> 999 Then
+            Sheets("DB_pre").Range(cell5 & ":" & cell6).Copy Sheets("DB_Cur").Range(cell7 & ":" & cell8)
+        End If
+       
+       j = j + 1
+       
+   Next Item
+   
+Sheets("DB_Cur").Range("D1").EntireColumn.Insert
+P = Sheets("Lead").Range("C30")
+Sheets("DB_Cur").Range("D5") = P
+   
+Z = WorksheetFunction.CountA(mainArray)
+'MsgBox Z
+   
+   
+For I = 1 To Z
+       b = 6 + I - 1
+       lookup_p1 = "=iferror(VLOOKUP("
+       lookup_p2 = Cells(b, 3).Address
+       lookup_p3 = "DB_Cur!" & lookup_p2
+       lookup_p4 = ",Test_HM!$E$4:$AT$255,42,FALSE),999)"
+       Lookup = lookup_p1 + lookup_p3 + lookup_p4
+       With ThisWorkbook.Sheets("DB_Cur")
+               .Cells(1, 2).FormulaArray = Lookup
+               .Cells(b, 4) = .Cells(1, 2).Value
+       End With
+       
+     v1 = Sheets("DB_Cur").Cells(b, 4).Value
+
+     If v1 = 2.5 Then
+     Sheets("DB_Cur").Cells(b, 4).Interior.Color = RGB(255, 124, 128)
+     End If
+
+     If v1 = 3 Then
+
+     Sheets("DB_Cur").Cells(b, 4).Interior.Color = RGB(192, 0, 0)
+     End If
+
+          If v1 = 1.5 Then
+
+     Sheets("DB_Cur").Cells(b, 4).Interior.Color = RGB(255, 242, 204)
+     End If
+
+     If v1 = 2 Then
+
+     Sheets("DB_Cur").Cells(b, 4).Interior.Color = RGB(255, 217, 102)
+     End If
+
+          If v1 = 0.5 Then
+     Sheets("DB_Cur").Cells(b, 4).Interior.Color = RGB(226, 239, 218)
+     End If
+
+     If v1 = 1 Then
+     'Sheets("Final").Cells(k, 2).Interior.Color = RGB(169, 208, 142)
+     Sheets("DB_Cur").Cells(b, 4).Interior.Color = RGB(169, 208, 142)
+     End If
+     
+Next I
+
+
+Sheets("DB_Cur").Range("A1") = "=COUNTA(C:C)-1"
+Sheets("DB_Cur").Range("A2") = "=COUNTA(5:5)-1"
+
+  Application.DisplayAlerts = False
+  Sheets("DB_pre").Delete
+  Application.DisplayAlerts = True
+  
+Sheets("DB_Cur").Name = "DB_pre"
+'get array from previous database
+'get array from current list
+'use unique elements
+'copy from previous databse
+'vlookup for the current period
+
+
+End Sub
