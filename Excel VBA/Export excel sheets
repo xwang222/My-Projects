@@ -1,0 +1,31 @@
+Sub export()
+Num = Sheets("Lead").Range("C53").Value
+
+'declare a variant array
+Dim strNames() As String
+ReDim strNames(1 To Num)
+
+'Read in the list of bank
+Dim Copyrange As String
+
+For i = 1 To Num
+    B = 54 + i - 1
+    Let Copyrange = "C" & B
+    strNames(i) = Range(Copyrange).Value
+    'MsgBox strNames(i)
+    Next i
+
+FPath = Sheets("Lead").Range("F54").Value
+FName = Sheets("Lead").Range("F55").Value & Format(Date, "ddmmyy") & ".xlsx"
+
+Set NewBook = Workbooks.Add
+
+For Each item In strNames
+    'Set xp1 = Sheets(item)
+    ThisWorkbook.Sheets(item).Copy Before:=NewBook.Sheets(1)
+Next item
+
+    NewBook.SaveAs Filename:=FPath & FName
+    NewBook.Close
+
+End Sub
