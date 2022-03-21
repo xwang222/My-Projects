@@ -1,0 +1,63 @@
+Sub merge_outlook()
+
+Dim xlApp As New Excel.Application
+Dim xlWB As Excel.Workbook
+Dim xlWS As Excel.Worksheet
+
+xlApp.Visible = False
+
+'Open Workbook from specified path
+
+Dim loc As String
+
+loc = Cells(2, 3).Value
+output = Cells(3, 3).Value
+
+'MsgBox output
+'MsgBox loc
+Set xlWB = xlApp.Workbooks.Open(loc)
+Set xlWS = xlWB.Sheets("Issuers_Values")
+Set x2WS = xlWB.Sheets("Holco_Values")
+
+'xlWB.Activate
+'Select Worksheet from opened Workbook
+xlWB.Sheets.Add.Name = "outlook"
+
+'xlWB.Save
+    
+    cell1 = Cells(2, 1).Address
+    cell2 = Cells(2, 28).Address
+    
+    xlWS.Range(cell1 & ":" & cell2).Copy xlWB.Worksheets("outlook").Range(cell1 & ":" & cell2) 'copy header
+    'MsgBox "copy done"
+    
+    LastRow_IV = xlWS.Range("A" & xlWS.Rows.Count).End(xlUp).Row
+    'MsgBox LastRow_IV
+    
+    LastRow_HV = x2WS.Range("A" & x2WS.Rows.Count).End(xlUp).Row
+    'MsgBox LastRow_HV
+    
+    cell1 = Cells(3, 1).Address
+    cell2 = Cells(LastRow_IV, 28).Address
+    
+    cell3 = Cells(3, 1).Address
+    cell4 = Cells(LastRow_HV, 28).Address
+    
+    cell5 = Cells(LastRow_IV + 1, 1).Address
+    cell6 = Cells(LastRow_HV + 1 + LastRow_IV, 28).Address
+    
+    xlWS.Range(cell1 & ":" & cell2).Copy _
+            xlWB.Worksheets("outlook").Range(cell1 & ":" & cell2)
+    'MsgBox "copy done"
+
+    x2WS.Range(cell3 & ":" & cell4).Copy _
+            xlWB.Worksheets("outlook").Range(cell5 & ":" & cell6)
+    'MsgBox "copy done"
+
+xlWB.Save
+
+xlWB.Close
+xlApp.Quit
+MsgBox "Preprocess Finished"
+
+End Sub
