@@ -1,0 +1,209 @@
+import tushare as ts
+import random
+import numpy as np
+import yfinance as yf
+import pandas as pd
+import matplotlib.pyplot as plt
+import scipy.optimize as optimization
+import time
+start_time=time.time()
+
+def download_data():
+    stock_data = {}
+    
+    for item in stocks:
+        test=pro.daily(ts_code=item, start_date=s_date, end_date=e_date)
+        test['trade_date']=pd.to_datetime(test.trade_date)
+        stock_data[item]=test
+    
+    return stock_data
+    
+def show_data(stock_data):
+    for item in stock_data:
+        test =stock_data[item][['close','trade_date']]
+        plt.plot(test.trade_date, test.close, label=item)
+    
+    plt.legend()
+    plt.show()
+
+#[['trade_date','close']]
+def Close_data(stock_data):
+    df_Close=pd.DataFrame()
+    
+    for item in stock_data:
+        test =stock_data[item]['close']
+        df_Close[item]=test
+    
+    return df_Close
+
+def calculate_return(data):
+    # NORMALIZATION - to measure all variables in comparable metric
+    log_return = np.log(data / data.shift(1))
+    return log_return[1:]
+
+
+def show_statistics(returns):
+    # instead of daily metrics we are after annual metrics
+    # mean of annual return
+    print(returns.mean() * NUM_TRADING_DAYS)
+    print(returns.cov() * NUM_TRADING_DAYS)
+
+
+def show_mean_variance(returns, weights):
+    # we are after the annual return
+    portfolio_return = np.sum(returns.mean() * weights) * NUM_TRADING_DAYS
+    portfolio_volatility = np.sqrt(np.dot(weights.T, np.dot(returns.cov()
+                                                            * NUM_TRADING_DAYS, weights)))
+    print("Expected portfolio mean (return): ", portfolio_return)
+    print("Expected portfolio volatility (standard deviation): ", portfolio_volatility)
+
+
+def show_portfolios(returns, volatilities):
+    plt.figure(figsize=(10, 6))
+    plt.scatter(volatilities, returns, c=returns / volatilities, marker='o')
+    plt.grid(True)
+    plt.xlabel('Expected Volatility')
+    plt.ylabel('Expected Return')
+    plt.colorbar(label='Sharpe Ratio')
+    plt.show()
+
+
+def generate_portfolios(returns,delist):
+    portfolio_means = []
+    portfolio_risks = []
+    portfolio_weights = []
+
+    for _ in range(NUM_PORTFOLIOS):
+        w = np.random.random(len(stocks)-len(delist))
+        w /= np.sum(w)
+        portfolio_weights.append(w)
+        portfolio_means.append(np.sum(returns.mean() * w) * NUM_TRADING_DAYS)
+        portfolio_risks.append(np.sqrt(np.dot(w.T, np.dot(returns.cov()
+                                                          * NUM_TRADING_DAYS, w))))
+
+    return np.array(portfolio_weights), np.array(portfolio_means), np.array(portfolio_risks)
+
+
+def statistics(weights, returns):
+    portfolio_return = np.sum(returns.mean() * weights) * NUM_TRADING_DAYS
+    portfolio_volatility = np.sqrt(np.dot(weights.T, np.dot(returns.cov()
+                                                            * NUM_TRADING_DAYS, weights)))
+    return np.array([portfolio_return, portfolio_volatility,
+                     portfolio_return / portfolio_volatility])
+
+
+# scipy optimize module can find the minimum of a given function
+# the maximum of a f(x) is the minimum of -f(x)
+def min_function_sharpe(weights, returns):
+    return -statistics(weights, returns)[2]
+
+
+# what are the constraints? The sum of weights = 1 !!!
+# f(x)=0 this is the function to minimize
+def optimize_portfolio(weights, returns):
+    # the sum of weights is 1
+    constraints = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
+    # the weights can be 1 at most: 1 when 100% of money is invested into a single stock
+    bounds = tuple((0, 1) for _ in range(len(stocks)))
+    return optimization.minimize(fun=min_function_sharpe, x0=weights[0], args=returns
+                                 , method='SLSQP', bounds=bounds, constraints=constraints)
+
+
+def print_optimal_portfolio(optimum, returns):
+    print("Optimal portfolio: ", optimum['x'].round(3))
+    print("Expected return, volatility and Sharpe ratio: ",
+          statistics(optimum['x'].round(3), returns))
+
+
+def show_optimal_portfolio(opt, rets, portfolio_rets, portfolio_vols):
+    plt.figure(figsize=(10, 6))
+    plt.scatter(portfolio_vols, portfolio_rets, c=portfolio_rets / portfolio_vols, marker='o')
+    plt.grid(True)
+    plt.xlabel('Expected Volatility')
+    plt.ylabel('Expected Return')
+    plt.colorbar(label='Sharpe Ratio')
+    plt.plot(statistics(opt['x'], rets)[1], statistics(opt['x'], rets)[0], 'g*', markersize=20.0)
+    plt.show()
+
+
+# tes run function
+if __name__ == '__main__':
+    
+    # on average there are 252 trading days in a year
+    NUM_TRADING_DAYS = 252
+    # we will generate random w (different portfolios)
+    NUM_PORTFOLIOS = 10000
+    
+    s_date = '2016-01-01'
+    e_date = '2022-01-01'
+
+    pro = ts.pro_api("6e18d5031d4f29301583dad6c091caa66997fdaabb2b83a763098a41")
+    stock_list=pro.stock_basic(market="主板") # use only main board stock
+    stock_list = stock_list[stock_list["name"].str.contains("ST") == False] # exclude any ST
+    stock_list['List_year']=stock_list['list_date'].str[:4].astype(int)
+    stock_list=stock_list[stock_list['List_year']<=2020] # select 
+    stock_list=stock_list.reset_index()
+    
+    KPI=[]
+    pf={}
+    
+    for i in range(100):
+        index=random.sample(range(0, 1913), 100)
+        stock_list_lp=stock_list[stock_list.index.isin(index)]
+        '''
+        stock_list_1 = stock_list[stock_list["industry"].str.contains("制药") == True]
+        stock_list_2 = stock_list[stock_list["industry"].str.contains("环境") == True]
+        stock_list_3 = stock_list[stock_list["industry"].str.contains("百货") == True]
+        stock_list_4 = stock_list[stock_list["industry"].str.contains("元器件") == True]
+        stock_list_5 = stock_list[stock_list["industry"].str.contains("食品") == True]
+        stock_list=pd.concat([stock_list_1,stock_list_2,stock_list_3,stock_list_4,stock_list_5],ignore_index=True) 
+        '''
+        stock=stock_list_lp['ts_code']
+        name=stock_list_lp['name']
+        len(stock_list_lp)
+    
+        stock_test=stock #[0:1500]
+        name_test=name #[0:1500]
+    
+    
+        # stocks we are going to handle
+        stocks = stock_test
+        names = name_test
+        # historical data - define START and END dates
+    
+        stock_data=download_data()
+        #show_data(stock_data)
+        
+        df_Close=pd.DataFrame()
+        
+        for item in stock_data:
+            test =stock_data[item]['close']
+            df_Close[item]=test
+        
+        Close_data=df_Close
+        
+        s=pd.Series(Close_data.isnull().all())
+        delist = s.index[s]
+        Close_data=Close_data.drop(delist, axis=1)
+        log_daily_returns = calculate_return(Close_data)
+        # show_statistics(log_daily_returns)
+    
+        pweights, means, risks = generate_portfolios(log_daily_returns,delist)
+        show_portfolios(means, risks)
+        optimum = optimize_portfolio(pweights, log_daily_returns)
+        print_optimal_portfolio(optimum, log_daily_returns)
+        
+        df_p=pd.DataFrame()
+        df_p['id']=stocks
+        df_p['name']=names
+        df_p['weight']=optimum['x']
+        kpi_1=statistics(optimum['x'].round(3), log_daily_returns)[2]
+        
+        print("---- %s seconds ----" % (time.time()-start_time))
+        
+        KPI.append(kpi_1)
+        pf[i]=df_p
+        
+max_value = max(KPI)
+max_index = KPI.index(max_value)
+best_pf=pf[max_index]
