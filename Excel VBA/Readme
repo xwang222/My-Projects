@@ -1,1 +1,5 @@
-create folder
+This folder contains the excel VBA I developed to:
+1) lookup value from closed workbook at different locations;
+2) automatically sort based on user specified criteria;
+3) maintain a database in excel;
+4) formatting and exporting;
