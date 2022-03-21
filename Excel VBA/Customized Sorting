@@ -1,0 +1,91 @@
+Sub preproc()
+
+num_all = Range("C3").Value 'total number of banks
+
+sb_1 = Range("C5").Value
+sb_2 = Range("C6").Value
+sb_3 = Range("C7").Value
+
+Sheets("Heat map ori").Copy after:=Sheets("Heat map ori")
+
+With ActiveSheet.UsedRange.Cells
+ 
+    .Value = .Value
+    
+End With
+
+ActiveSheet.Name = "Test_HM"
+
+' add sorting base-color-sb1
+
+Sheets("Test_HM").Range("A1").EntireColumn.Insert
+Sheets("Test_HM").Range("A3") = "sort_color"
+
+For I = 1 To num_all
+       
+       v1_loc = WorksheetFunction.Match(sb_1, Sheets("Test_HM").Range("3:3"), 0)
+       
+       A1 = Sheets("Test_HM").Cells(3 + I, v1_loc).Value
+       
+       v2_loc = WorksheetFunction.Match(A1, Sheets("reference").Range("A:A"), 0)
+       
+       v2 = Sheets("reference").Cells(v2_loc, 2)
+       
+       Sheets("Test_HM").Cells(3 + I, 1).Value = v2
+      
+
+Next I
+
+' add sorting base-color-sb2
+
+Sheets("Test_HM").Range("A1").EntireColumn.Insert
+Sheets("Test_HM").Range("A3") = "sort_notch"
+
+For I = 1 To num_all
+       
+       v1_loc = WorksheetFunction.Match(sb_2, Sheets("Test_HM").Range("3:3"), 0)
+       
+       A1 = Sheets("Test_HM").Cells(3 + I, v1_loc).Value
+       
+       v2_loc = WorksheetFunction.Match(A1, Sheets("reference").Range("D:D"), 0)
+       
+       v2 = Sheets("reference").Cells(v2_loc, 5)
+       
+       Sheets("Test_HM").Cells(3 + I, 1).Value = v2
+      
+
+Next I
+
+' add sorting base-color-sb3
+
+Sheets("Test_HM").Range("A1").EntireColumn.Insert
+Sheets("Test_HM").Range("A3") = "sort_uti"
+
+For I = 1 To num_all
+       
+       v1_loc = WorksheetFunction.Match(sb_3, Sheets("Test_HM").Range("3:3"), 0)
+                    
+       v2 = Sheets("Test_HM").Cells(3 + I, v1_loc)
+       
+       If v2 = "--" Then v2 = -1
+       
+       Sheets("Test_HM").Cells(3 + I, 1).Value = v2
+     
+
+Next I
+
+' aggregate soring base
+Sheets("Test_HM").Range("A1").EntireColumn.Insert
+Sheets("Test_HM").Range("A3") = "sort_agg"
+
+For I = 1 To num_all
+   
+       Sheets("Test_HM").Cells(3 + I, 1).Value = Sheets("Test_HM").Cells(3 + I, 2).Value + Sheets("Test_HM").Cells(3 + I, 3).Value + Sheets("Test_HM").Cells(3 + I, 4).Value
+       b = 3 + I
+       p1 = "AL" & b
+       p2 = "AC" & b
+       p3 = Chr(34) & "XXX" & Chr(34)
+       Sheets("Test_HM").Cells(3 + I, 46).Value = "=IF(" & p1 & "<>" & p3 & "," & p2 & "-0.5," & p2 & ")"
+Next I
+
+End Sub
