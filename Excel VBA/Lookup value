@@ -1,0 +1,518 @@
+Sub Rating()
+
+Dim Num As Integer
+
+' read in number of banks
+Num = Range("F3").Value
+
+Dim strNames() As String
+ReDim strNames(1 To Num)
+
+'define an array that contains name of banks
+Dim Copyrange As String
+
+Startrow = 5
+Lastrow = 5 + Num - 1
+
+For i = 1 To Num
+    B = 5 + i - 1
+    Let Copyrange = "F" & B
+    strNames(i) = Range(Copyrange).Value
+    'MsgBox strNames(i)
+    Next i
+
+Dim Path_ref1 As String
+
+'define reference tables
+ref1_path = Worksheets("Path").Cells(4, 7).Value
+ref1_name = Worksheets("Path").Cells(4, 8).Value
+ref1_sheet = Worksheets("Path").Cells(4, 9).Value
+
+ref5_path = Worksheets("Path").Cells(8, 7).Value
+ref5_name = Worksheets("Path").Cells(8, 8).Value
+ref5_sheet = Worksheets("Path").Cells(8, 9).Value
+
+'create new sheet
+sname = Range("B2").Value
+If Range("I25") = True Then sname = "Custom"
+sheetname = "Ratings_" + sname
+Sheets.Add.Name = sheetname
+
+'column titles of new sheet
+Range("C7").Value = "Holding company"
+Range("C7").Font.Bold = True
+Range("C7").Borders(xlEdgeBottom).LineStyle = xlContinuous
+Range("C9").Value = "S&P"
+Range("C10").Value = "Moody's"
+Range("C11").Borders(xlEdgeBottom).LineStyle = xlContinuous
+Range("C11").Value = "Fitch"
+Range("C12").Value = "Avg.Rating"
+Range("C12").Font.Bold = True
+
+Range("C14").Value = "Operating Subsidiary"
+Range("C14").Borders(xlEdgeBottom).LineStyle = xlContinuous
+Range("C14").Font.Bold = True
+Range("C16").Value = "S&P"
+Range("C17").Value = "Moody's"
+Range("C18").Value = "Fitch"
+Range("C18").Borders(xlEdgeBottom).LineStyle = xlContinuous
+Range("C19").Value = "Avg.Rating"
+Range("C19").Font.Bold = True
+
+Range("C107").Value = "NumCon - Holding company"
+Range("C107").Font.Bold = True
+Range("C107").Borders(xlEdgeBottom).LineStyle = xlContinuous
+Range("C109").Value = "S&P"
+Range("C110").Value = "Moody's"
+Range("C111").Borders(xlEdgeBottom).LineStyle = xlContinuous
+Range("C111").Value = "Fitch"
+Range("C112").Value = "Avg.Rating"
+Range("C112").Font.Bold = True
+
+Range("C114").Value = "NumCon -Operating Subsidiary"
+Range("C114").Borders(xlEdgeBottom).LineStyle = xlContinuous
+Range("C114").Font.Bold = True
+Range("C116").Value = "S&P"
+Range("C117").Value = "Moody's"
+Range("C118").Value = "Fitch"
+Range("C118").Borders(xlEdgeBottom).LineStyle = xlContinuous
+Range("C119").Value = "Avg.Rating"
+Range("C119").Font.Bold = True
+Columns(2).ColumnWidth = 2
+
+Dim item As Variant
+'each item is a bank
+
+'j controls the column location of the first bank
+j = 4
+   'loop through the entire array
+   For Each item In strNames
+       Cells(3, j).Value = item
+       Columns(j).ColumnWidth = 8.11
+       Columns(j + 1).ColumnWidth = 9.78
+       Columns(j + 2).ColumnWidth = 3
+
+        
+        'holding company
+        ' - lookup name from sheet "jurisdiction"
+       lookup_p1 = "=VLOOKUP("
+       lookup_p2 = Cells(3, j).Address
+       
+       lookup_p3 = ",'Jurisdiction'!$A$2:$F$67,6,FALSE)"
+       Lookup = lookup_p1 + lookup_p2 + lookup_p3
+       'MsgBox Lookup
+       With ThisWorkbook.Sheets(sheetname)
+        .Cells(7, j).FormulaArray = Lookup
+        .Cells(107, j).FormulaArray = Lookup
+       End With
+       
+        ' - lookup whether there is a holding company
+       lookup_p1 = "=VLOOKUP("
+       lookup_p2 = Cells(3, j).Address
+       lookup_p4 = sheetname & "!" & lookup_p2
+       lookup_p3 = ",'Jurisdiction'!$A$2:$L$67,12,FALSE)"
+       Lookup = lookup_p1 + lookup_p4 + lookup_p3
+       'MsgBox Lookup
+       With ThisWorkbook.Sheets("AUX")
+        .Cells(4, 2).FormulaArray = Lookup
+       End With
+       
+       B = ThisWorkbook.Sheets("AUX").Cells(4, 2).Value
+       
+       Cells(7, j).Font.Color = RGB(255, 255, 255)
+       Cells(7, j).Font.Bold = True
+       Cells(7, j).Interior.Color = RGB(79, 129, 189)
+       cell1 = Cells(7, j).Address
+       cell2 = Cells(7, j + 1).Address
+       Range(cell1 & ":" & cell2).merge
+       
+       Cells(8, j).Value = "Rating"
+       Cells(8, j + 1).Value = "Outlook"
+       
+       If B = 1 Then
+       
+       's&p
+        HC = Sheets(sheetname).Cells(7, j).Address
+        HC_name = sheetname & "!" & HC
+        'MsgBox HC_name
+        col = Cells(16, 2).Address
+        col_name = "Rating!" & col
+           
+    ThisWorkbook.Sheets("AUX").Cells(6, 2) = "=MATCH(" & HC_name & ",'" & ref5_path & "[" & ref5_name & "]" & ref5_sheet & "'!$C:$C,0)"
+    ThisWorkbook.Sheets("AUX").Cells(7, 3) = "=MATCH(" & col_name & ",'" & ref5_path & "[" & ref5_name & "]" & ref5_sheet & "'!$2:$2,0)"
+    
+    row_1 = ThisWorkbook.Sheets("AUX").Cells(6, 2).Value
+    col_1 = ThisWorkbook.Sheets("AUX").Cells(7, 3).Value
+    
+    ColumnNumber = col_1
+    ColumnLetter = Split(Cells(1, ColumnNumber).Address, "$")(1)
+    
+    ThisWorkbook.Sheets(sheetname).Cells(9, j) = "='" & ref5_path & "[" & ref5_name & "]" & ref5_sheet & "'!" & ColumnLetter & row_1
+       
+       'moody - this needs to be filled using some lookup method. Ex post mannual input will have problem
+        col = Cells(17, 2).Address
+        col_name = "Rating!" & col
+           
+    ThisWorkbook.Sheets("AUX").Cells(6, 2) = "=MATCH(" & HC_name & ",'" & ref5_path & "[" & ref5_name & "]" & ref5_sheet & "'!$C:$C,0)"
+    ThisWorkbook.Sheets("AUX").Cells(7, 3) = "=MATCH(" & col_name & ",'" & ref5_path & "[" & ref5_name & "]" & ref5_sheet & "'!$2:$2,0)"
+    
+    row_1 = ThisWorkbook.Sheets("AUX").Cells(6, 2).Value
+    col_1 = ThisWorkbook.Sheets("AUX").Cells(7, 3).Value
+    
+    ColumnNumber = col_1
+    ColumnLetter = Split(Cells(1, ColumnNumber).Address, "$")(1)
+    
+    ThisWorkbook.Sheets(sheetname).Cells(10, j) = "='" & ref5_path & "[" & ref5_name & "]" & ref5_sheet & "'!" & ColumnLetter & row_1
+       
+       'fitch - this needs to be filled using some lookup method. Ex post mannual input will have problem
+        col = Cells(18, 2).Address
+        col_name = "Rating!" & col
+           
+    ThisWorkbook.Sheets("AUX").Cells(6, 2) = "=MATCH(" & HC_name & ",'" & ref5_path & "[" & ref5_name & "]" & ref5_sheet & "'!$C:$C,0)"
+    ThisWorkbook.Sheets("AUX").Cells(7, 3) = "=MATCH(" & col_name & ",'" & ref5_path & "[" & ref5_name & "]" & ref5_sheet & "'!$2:$2,0)"
+    
+    row_1 = ThisWorkbook.Sheets("AUX").Cells(6, 2).Value
+    col_1 = ThisWorkbook.Sheets("AUX").Cells(7, 3).Value
+    
+    ColumnNumber = col_1
+    ColumnLetter = Split(Cells(1, ColumnNumber).Address, "$")(1)
+    
+    ThisWorkbook.Sheets(sheetname).Cells(11, j) = "='" & ref5_path & "[" & ref5_name & "]" & ref5_sheet & "'!" & ColumnLetter & row_1
+       
+       End If
+       
+       'outlook
+       ''''''''''''''''''''''''''''''''''' import outlook from bloomberg --- S&P
+        HC = Sheets(sheetname).Cells(7, j).Address
+        HC_name = sheetname & "!" & HC
+        'MsgBox HC_name
+        col = Cells(12, 2).Address
+        col_name = "Rating!" & col
+           
+    ThisWorkbook.Sheets("AUX").Cells(3, 2) = "=MATCH(" & HC_name & ",'" & ref5_path & "[" & ref5_name & "]" & ref5_sheet & "'!$C:$C,0)"
+    ThisWorkbook.Sheets("AUX").Cells(3, 3) = "=MATCH(" & col_name & ",'" & ref5_path & "[" & ref5_name & "]" & ref5_sheet & "'!$2:$2,0)"
+    
+    row_1 = ThisWorkbook.Sheets("AUX").Cells(3, 2).Value
+    col_1 = ThisWorkbook.Sheets("AUX").Cells(3, 3).Value
+    
+    ColumnNumber = col_1
+    ColumnLetter = Split(Cells(1, ColumnNumber).Address, "$")(1)
+    
+    ThisWorkbook.Sheets(sheetname).Cells(9, j + 1) = "='" & ref5_path & "[" & ref5_name & "]" & ref5_sheet & "'!" & ColumnLetter & row_1
+
+
+       ''''''''''''''''''''''''''''''''''' import outlook from bloomberg --- md
+  
+        col = Cells(13, 2).Address
+        col_name = "Rating!" & col
+           
+    ThisWorkbook.Sheets("AUX").Cells(3, 2) = "=MATCH(" & HC_name & ",'" & ref5_path & "[" & ref5_name & "]" & ref5_sheet & "'!$C:$C,0)"
+    ThisWorkbook.Sheets("AUX").Cells(3, 3) = "=MATCH(" & col_name & ",'" & ref5_path & "[" & ref5_name & "]" & ref5_sheet & "'!$2:$2,0)"
+    
+    row_1 = ThisWorkbook.Sheets("AUX").Cells(3, 2).Value
+    col_1 = ThisWorkbook.Sheets("AUX").Cells(3, 3).Value
+    
+    ColumnNumber = col_1
+    ColumnLetter = Split(Cells(1, ColumnNumber).Address, "$")(1)
+    
+    ThisWorkbook.Sheets(sheetname).Cells(10, j + 1) = "='" & ref5_path & "[" & ref5_name & "]" & ref5_sheet & "'!" & ColumnLetter & row_1
+
+       
+    ''''''''''''''''''''''''''''''''''' import outlook from bloomberg --- fitch
+     
+        col = Cells(14, 2).Address
+        col_name = "Rating!" & col
+           
+    ThisWorkbook.Sheets("AUX").Cells(3, 2) = "=MATCH(" & HC_name & ",'" & ref5_path & "[" & ref5_name & "]" & ref5_sheet & "'!$C:$C,0)"
+    ThisWorkbook.Sheets("AUX").Cells(3, 3) = "=MATCH(" & col_name & ",'" & ref5_path & "[" & ref5_name & "]" & ref5_sheet & "'!$2:$2,0)"
+    
+    row_1 = ThisWorkbook.Sheets("AUX").Cells(3, 2).Value
+    col_1 = ThisWorkbook.Sheets("AUX").Cells(3, 3).Value
+    
+    ColumnNumber = col_1
+    ColumnLetter = Split(Cells(1, ColumnNumber).Address, "$")(1)
+    
+    ThisWorkbook.Sheets(sheetname).Cells(11, j + 1) = "='" & ref5_path & "[" & ref5_name & "]" & ref5_sheet & "'!" & ColumnLetter & row_1
+       
+        'operating sub
+       ' - lookup name from sheet "jurisdiction"
+       lookup_p1 = "=VLOOKUP("
+       lookup_p2 = Cells(3, j).Address
+       lookup_p3 = ",'Jurisdiction'!$A$2:$F$67,3,FALSE)"
+       Lookup = lookup_p1 + lookup_p2 + lookup_p3
+       'MsgBox Lookup
+       With ThisWorkbook.Sheets(sheetname)
+        .Cells(14, j).FormulaArray = Lookup
+       End With
+       
+       Cells(14, j).Font.Color = RGB(255, 255, 255)
+       Cells(14, j).Font.Bold = True
+       Cells(14, j).Interior.Color = RGB(79, 129, 189)
+       cell1 = Cells(14, j).Address
+       cell2 = Cells(14, j + 1).Address
+       Range(cell1 & ":" & cell2).merge
+       Cells(15, j).Value = "Rating"
+       Cells(15, j + 1).Value = "Outlook"
+       
+       'S&P
+       lookup_p1 = "=VLOOKUP("
+       lookup_p2 = Cells(3, j).Address
+       lookup_p3 = ",'" & ref1_path & "[" & ref1_name & "]" & ref1_sheet & "'!$A$2:$W$80,9,FALSE)"
+       Lookup = lookup_p1 + lookup_p2 + lookup_p3
+       'MsgBox Lookup
+       With ThisWorkbook.Sheets(sheetname)
+        .Cells(16, j).FormulaArray = Lookup
+       End With
+       
+       'Moody
+       lookup_p1 = "=VLOOKUP("
+       lookup_p2 = Cells(3, j).Address
+       lookup_p3 = ",'" & ref1_path & "[" & ref1_name & "]" & ref1_sheet & "'!$A$2:$W$80,10,FALSE)"
+       Lookup = lookup_p1 + lookup_p2 + lookup_p3
+       'MsgBox Lookup
+       With ThisWorkbook.Sheets(sheetname)
+        .Cells(17, j).FormulaArray = Lookup
+       End With
+       
+       'fitch
+       lookup_p1 = "=VLOOKUP("
+       lookup_p2 = Cells(3, j).Address
+       lookup_p3 = ",'" & ref1_path & "[" & ref1_name & "]" & ref1_sheet & "'!$A$2:$W$80,11,FALSE)"
+       Lookup = lookup_p1 + lookup_p2 + lookup_p3
+       'MsgBox Lookup
+       With ThisWorkbook.Sheets(sheetname)
+        .Cells(18, j).FormulaArray = Lookup
+       End With
+       
+       
+       ''''''''''''''''''''''''''''''''''' import outlook from bloomberg --- S&P
+        HC = Sheets(sheetname).Cells(14, j).Address
+        HC_name = sheetname & "!" & HC
+        'MsgBox HC_name
+        col = Cells(12, 2).Address
+        col_name = "Rating!" & col
+           
+    ThisWorkbook.Sheets("AUX").Cells(3, 2) = "=MATCH(" & HC_name & ",'" & ref5_path & "[" & ref5_name & "]" & ref5_sheet & "'!$C:$C,0)"
+    ThisWorkbook.Sheets("AUX").Cells(3, 3) = "=MATCH(" & col_name & ",'" & ref5_path & "[" & ref5_name & "]" & ref5_sheet & "'!$2:$2,0)"
+    
+    row_1 = ThisWorkbook.Sheets("AUX").Cells(3, 2).Value
+    col_1 = ThisWorkbook.Sheets("AUX").Cells(3, 3).Value
+    
+    ColumnNumber = col_1
+    ColumnLetter = Split(Cells(1, ColumnNumber).Address, "$")(1)
+    
+    ThisWorkbook.Sheets(sheetname).Cells(16, j + 1) = "='" & ref5_path & "[" & ref5_name & "]" & ref5_sheet & "'!" & ColumnLetter & row_1
+
+
+       ''''''''''''''''''''''''''''''''''' import outlook from bloomberg --- md
+  
+        col = Cells(13, 2).Address
+        col_name = "Rating!" & col
+           
+    ThisWorkbook.Sheets("AUX").Cells(3, 2) = "=MATCH(" & HC_name & ",'" & ref5_path & "[" & ref5_name & "]" & ref5_sheet & "'!$C:$C,0)"
+    ThisWorkbook.Sheets("AUX").Cells(3, 3) = "=MATCH(" & col_name & ",'" & ref5_path & "[" & ref5_name & "]" & ref5_sheet & "'!$2:$2,0)"
+    
+    row_1 = ThisWorkbook.Sheets("AUX").Cells(3, 2).Value
+    col_1 = ThisWorkbook.Sheets("AUX").Cells(3, 3).Value
+    
+    ColumnNumber = col_1
+    ColumnLetter = Split(Cells(1, ColumnNumber).Address, "$")(1)
+    
+    ThisWorkbook.Sheets(sheetname).Cells(17, j + 1) = "='" & ref5_path & "[" & ref5_name & "]" & ref5_sheet & "'!" & ColumnLetter & row_1
+
+       
+    ''''''''''''''''''''''''''''''''''' import outlook from bloomberg --- fitch
+     
+        col = Cells(14, 2).Address
+        col_name = "Rating!" & col
+           
+    ThisWorkbook.Sheets("AUX").Cells(3, 2) = "=MATCH(" & HC_name & ",'" & ref5_path & "[" & ref5_name & "]" & ref5_sheet & "'!$C:$C,0)"
+    ThisWorkbook.Sheets("AUX").Cells(3, 3) = "=MATCH(" & col_name & ",'" & ref5_path & "[" & ref5_name & "]" & ref5_sheet & "'!$2:$2,0)"
+    
+    row_1 = ThisWorkbook.Sheets("AUX").Cells(3, 2).Value
+    col_1 = ThisWorkbook.Sheets("AUX").Cells(3, 3).Value
+    
+    ColumnNumber = col_1
+    ColumnLetter = Split(Cells(1, ColumnNumber).Address, "$")(1)
+    
+    ThisWorkbook.Sheets(sheetname).Cells(18, j + 1) = "='" & ref5_path & "[" & ref5_name & "]" & ref5_sheet & "'!" & ColumnLetter & row_1
+       
+       
+       'calculation part
+       'holding
+       'S&P
+       lookup_p1 = "=VLOOKUP("
+       lookup_p2 = Cells(9, j).Address
+       lookup_p3 = ",'Rating'!$I$3:$K$25,3,FALSE)"
+       Lookup = lookup_p1 + lookup_p2 + lookup_p3
+       'MsgBox Lookup
+       If IsEmpty(Cells(9, j)) = True Then
+            Cells(109, j).Value = 0
+       End If
+       
+       If IsEmpty(Cells(9, j)) = False Then
+            With ThisWorkbook.Sheets(sheetname)
+             .Cells(109, j).FormulaArray = Lookup
+            End With
+       End If
+       
+       'Moody
+       lookup_p1 = "=VLOOKUP("
+       lookup_p2 = Cells(10, j).Address
+       lookup_p3 = ",'Rating'!$J$3:$K$25,2,FALSE)"
+       Lookup = lookup_p1 + lookup_p2 + lookup_p3
+       'MsgBox Lookup
+       If IsEmpty(Cells(10, j)) = True Then
+            Cells(110, j).Value = 0
+       End If
+       
+       If IsEmpty(Cells(10, j)) = False Then
+            With ThisWorkbook.Sheets(sheetname)
+             .Cells(110, j).FormulaArray = Lookup
+            End With
+       End If
+       
+       'Fitch
+       lookup_p1 = "=VLOOKUP("
+       lookup_p2 = Cells(11, j).Address
+       lookup_p3 = ",'Rating'!$I$3:$K$25,3,FALSE)"
+       Lookup = lookup_p1 + lookup_p2 + lookup_p3
+       'MsgBox Lookup
+       If IsEmpty(Cells(11, j)) = True Then
+            Cells(111, j).Value = 0
+       End If
+       
+       If IsEmpty(Cells(11, j)) = False Then
+            With ThisWorkbook.Sheets(sheetname)
+             .Cells(111, j).FormulaArray = Lookup
+            End With
+       End If
+       
+       cell1 = Cells(109, j).Address
+       cell2 = Cells(111, j).Address
+       Range(cell1 & ":" & cell2).Borders.LineStyle = xlContinuous
+       Cells(112, j) = Application.WorksheetFunction.AverageIf(Range(cell1 & ":" & cell2), "<>#N/A")
+       
+       score = Cells(112, j).Value
+
+'operating company
+       'S&P
+       lookup_p1 = "=VLOOKUP("
+       lookup_p2 = Cells(16, j).Address
+       lookup_p3 = ",'Rating'!$I$3:$K$25,3,FALSE)"
+       Lookup = lookup_p1 + lookup_p2 + lookup_p3
+       'MsgBox Lookup
+       If IsEmpty(Cells(16, j)) = True Then
+            Cells(116, j).Value = 0
+       End If
+       
+       If IsEmpty(Cells(16, j)) = False Then
+            With ThisWorkbook.Sheets(sheetname)
+             .Cells(116, j).FormulaArray = Lookup
+            End With
+       End If
+       
+       'Moody
+       lookup_p1 = "=VLOOKUP("
+       lookup_p2 = Cells(17, j).Address
+       lookup_p3 = ",'Rating'!$J$3:$K$25,2,FALSE)"
+       Lookup = lookup_p1 + lookup_p2 + lookup_p3
+       'MsgBox Lookup
+       If IsEmpty(Cells(17, j)) = True Then
+            Cells(117, j).Value = 0
+       End If
+       
+       If IsEmpty(Cells(17, j)) = False Then
+            With ThisWorkbook.Sheets(sheetname)
+             .Cells(117, j).FormulaArray = Lookup
+            End With
+       End If
+       
+       'Fitch
+       lookup_p1 = "=VLOOKUP("
+       lookup_p2 = Cells(18, j).Address
+       lookup_p3 = ",'Rating'!$I$3:$K$25,3,FALSE)"
+       Lookup = lookup_p1 + lookup_p2 + lookup_p3
+       'MsgBox Lookup
+       If IsEmpty(Cells(18, j)) = True Then
+            Cells(118, j).Value = 0
+       End If
+       
+       If IsEmpty(Cells(18, j)) = False Then
+            With ThisWorkbook.Sheets(sheetname)
+             .Cells(118, j).FormulaArray = Lookup
+            End With
+       End If
+       
+       cell1 = Cells(116, j).Address
+       cell2 = Cells(118, j).Address
+       Range(cell1 & ":" & cell2).Borders.LineStyle = xlContinuous
+       Cells(119, j) = Application.WorksheetFunction.AverageIf(Range(cell1 & ":" & cell2), "<>#N/A")
+       
+        score = Cells(119, j).Value
+
+       cell1 = Cells(7, j).Address
+       cell2 = Cells(11, j + 1).Address
+       Range(cell1 & ":" & cell2).Borders.LineStyle = xlContinuous
+       
+       cell1 = Cells(14, j).Address
+       cell2 = Cells(18, j + 1).Address
+       Range(cell1 & ":" & cell2).Borders.LineStyle = xlContinuous
+              
+       Cells(12, j).Font.Bold = True
+       Cells(12, j).Borders.LineStyle = xlContinuous
+       Cells(19, j).Font.Bold = True
+       Cells(19, j).Borders.LineStyle = xlContinuous
+       
+       j = j + 3
+       
+       Next item
+       
+'Columns(j - 1).ColumnWidth = 2
+' change row
+B = 5 'banks per row
+r = Round((Num / B) + 0.5)
+e = 3
+C = 4 + B * e
+d_fix = 4 - 1 + B * e
+
+If r > 1 Then
+
+For i = 1 To r - 1
+    d = C - 1 + B * e
+     
+    cell5 = Cells(7, 3).Address
+    cell6 = Cells(19, 3).Address
+        
+    cell7 = Cells(7 + 20 * i, 3).Address
+    cell8 = Cells(19 + 20 * i, 3).Address
+    Range(cell5 & ":" & cell6).Copy
+    Range(cell7 & ":" & cell8).PasteSpecial xlPasteValuesAndNumberFormats
+    Range(cell7 & ":" & cell8).PasteSpecial xlPasteFormats
+     
+     
+    cell1 = Cells(3, C).Address
+    cell2 = Cells(19, d).Address
+        
+    cell3 = Cells(3 + 20 * i, 4).Address
+    cell4 = Cells(19 + 20 * i, d_fix).Address
+    Range(cell1 & ":" & cell2).Copy
+    Range(cell3 & ":" & cell4).PasteSpecial xlPasteValuesAndNumberFormats
+    Range(cell3 & ":" & cell4).PasteSpecial xlPasteFormats
+    
+    Range(cell1 & ":" & cell2).EntireColumn.Hidden = True
+    
+    C = d + 1
+    
+Next i
+       
+      Columns(18).ColumnWidth = 2
+Else
+       Columns(j - 1).ColumnWidth = 2
+End If
+       
+Columns("C").ColumnWidth = 15
+Columns("A:BB").HorizontalAlignment = xlCenter
+ActiveWindow.DisplayGridlines = False
+
+End Sub
