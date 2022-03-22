@@ -1,3 +1,9 @@
+Introduction: 
+This Macro will loop over a list of names,
+for each name, it will find the corersponding file path, file name and sheet name
+ for each item specified, it will lookup the value using "vlookup" function of excel
+formatting after getting the value
+
 Sub Rating()
 
 Dim Num As Integer
